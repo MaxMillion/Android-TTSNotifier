@@ -5,7 +5,7 @@ import java.util.Locale;
 public class TTSNotifierLanguageFR extends TTSNotifierLanguage {
 
 	// Don't mind the spelling, it's hard to let the TTS speak french >.>
-	
+
 	@Override
 	public Locale getLocale() {
 		return Locale.FRENCH;
@@ -20,7 +20,7 @@ public class TTSNotifierLanguageFR extends TTSNotifierLanguage {
 	public String getTxtUnknown() {
 		return "Inconnu";
 	}
-	
+
 	@Override
 	public String getTxtOptionsBatteryLowWarningText() {
 		return "La batterie est faible";

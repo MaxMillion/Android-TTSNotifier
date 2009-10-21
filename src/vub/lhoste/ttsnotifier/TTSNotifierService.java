@@ -3,12 +3,12 @@ package vub.lhoste.ttsnotifier;
 import java.io.IOException;
 import java.util.Locale;
 
+import com.google.tts.TextToSpeechBeta;
+
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -28,13 +28,12 @@ import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.SmsMessage;
 import android.util.Log;
-import android.widget.Toast;
 
-import android.speech.tts.TextToSpeech;
-
+@SuppressWarnings("deprecation")
 public class TTSNotifierService extends Service {
 
 	public volatile static TTSNotifierLanguage myLanguage = null;
+	public static final int MY_TTS_DATA_CHECK_CODE = 31337;
 
 	private static final String ACTION_PHONE_STATE = "android.intent.action.PHONE_STATE";
 	private static final String ACTION_SMS_RECEIVED = "android.provider.Telephony.SMS_RECEIVED";
@@ -51,8 +50,8 @@ public class TTSNotifierService extends Service {
 	private static final int MEDIUM_THREADWAIT = 300;
 	private static final int SHORT_THREADWAIT = 50;
 
-	private volatile static TextToSpeech myTts = null;
-	private volatile static boolean ttsReady = false;
+	public volatile static TextToSpeechBeta myTts = null;
+	public volatile static boolean ttsReady = false;
 	private volatile MediaPlayer myRingTonePlayer = null;
 	private volatile boolean stopRingtone = false;
 
@@ -97,7 +96,7 @@ public class TTSNotifierService extends Service {
 		Log.v("TTSNotifierService", "onStart()");
 		if (myTts == null) {
 			try {
-				myTts = new TextToSpeech(context, ttsInitListener);
+				myTts = new TextToSpeechBeta(context, ttsInitListener);
 			} catch (java.lang.ExceptionInInitializerError e) { e.printStackTrace(); }
 		}
 		if (mPrefs.getBoolean("cbxChangeLanguage", false))
@@ -211,7 +210,7 @@ public class TTSNotifierService extends Service {
 		setLanguageTts(myLanguage.getLocale());
 	} 
 
-	private static void setLanguageTts(Locale languageShortName) {
+	public static void setLanguageTts(Locale languageShortName) {
 		if (myTts != null) {
 			myTts.setLanguage(languageShortName);
 		}		
@@ -314,6 +313,7 @@ public class TTSNotifierService extends Service {
 			txtOptionsIncomingCall = mPrefs.getString("txtOptionsIncomingCall", myLanguage.getTxtOptionsIncomingCall());
 		else
 			txtOptionsIncomingCall = myLanguage.getTxtOptionsIncomingCall();
+		final boolean cbxOptionsIncomingCallUseNoteField = mPrefs.getBoolean("cbxOptionsIncomingCallUseNoteField", false);
 		final boolean cbxOptionsIncomingCallUseTTSRingtone = mPrefs.getBoolean("cbxOptionsIncomingCallUseTTSRingtone", false);
 		final String txtOptionsIncomingCallRingtone = mPrefs.getString("txtOptionsIncomingCallRingtone", Settings.System.DEFAULT_RINGTONE_URI.toString());
 		final int intOptionsIncomingCallMinimalRingCountBeforeTTS = Integer.parseInt(mPrefs.getString("intOptionsIncomingCallMinimalRingCountBeforeTTS", "2"));
@@ -381,7 +381,7 @@ public class TTSNotifierService extends Service {
 									}
 									break;
 								case 2:
-									speak(String.format(txtOptionsIncomingCall, getContactNameFromNumber(phoneNr)), true);
+									speak(String.format(txtOptionsIncomingCall, getContactNameFromNumber(phoneNr, cbxOptionsIncomingCallUseNoteField)), true);
 									nrTTS += 1;
 									break;
 								case 3:
@@ -395,7 +395,7 @@ public class TTSNotifierService extends Service {
 								ringtoneState += 1;
 							}
 						} else {
-							speak(String.format(txtOptionsIncomingCall, getContactNameFromNumber(phoneNr)), true);
+							speak(String.format(txtOptionsIncomingCall, getContactNameFromNumber(phoneNr, cbxOptionsIncomingCallUseNoteField)), true);
 						}
 					} catch (IllegalStateException e) {
 						e.printStackTrace();
@@ -412,8 +412,10 @@ public class TTSNotifierService extends Service {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	private void handleACTION_SMS_RECEIVED(Intent intent) {
 		if (!mPrefs.getBoolean("cbxEnableIncomingSMS", true)) return;
+		final boolean cbxOptionsIncomingSMSUseNoteField = mPrefs.getBoolean("cbxOptionsIncomingSMSUseNoteField", false);
 		String txtOptionsIncomingSMS;
 		// Preferences
 		if (mPrefs.getBoolean("cbxOptionsIncomingSMSOnlyAnnouncePerson", true))
@@ -438,7 +440,7 @@ public class TTSNotifierService extends Service {
 				body = bodyText.toString();
 			}
 			String address = messages[0].getDisplayOriginatingAddress();
-			speak(String.format(txtOptionsIncomingSMS, getContactNameFromNumber(address), body), true);
+			speak(String.format(txtOptionsIncomingSMS, getContactNameFromNumber(address, cbxOptionsIncomingSMSUseNoteField), body), true);
 		}
 	}
 
@@ -536,9 +538,8 @@ public class TTSNotifierService extends Service {
 			speak(txtOptionsWifiDisconnected, true);
 	}
 
-	private TextToSpeech.OnInitListener ttsInitListener = new TextToSpeech.OnInitListener() {
-		@Override
-		public void onInit(int version) {
+	public static TextToSpeechBeta.OnInitListener ttsInitListener = new TextToSpeechBeta.OnInitListener() {
+		public void onInit(int status, int version) {
 			Log.v("TTSNotifierService", "TTS INIT DONE");
 			setLanguageTts(myLanguage.getLocale());
 			myTts.speak("", 0, null);
@@ -546,33 +547,28 @@ public class TTSNotifierService extends Service {
 		}
 	};
 
-
-	public static boolean isTtsInstalled(Context ctx) {
-		PackageManager pm = ctx.getPackageManager();
-		Intent intent = new Intent("android.intent.action.USE_TTS");
-		intent.addCategory("android.intent.category.TTS");
-		ResolveInfo info = pm.resolveService(intent, 0); 
-		if (info == null) {
-			return false;
-		}   
-		return true;
-	}
-
-	private String getContactNameFromNumber(String number) {
+	private String getContactNameFromNumber(String number, boolean useNote) {
 		String[] projection = new String[] {
-				Contacts.Phones.DISPLAY_NAME,
+				Contacts.Phones.NOTES,
+				Contacts.Phones.DISPLAY_NAME, 
 				Contacts.Phones.NUMBER };
 		Uri contactUri = Uri.withAppendedPath(Contacts.Phones.CONTENT_FILTER_URL, Uri.encode(number));
 		Cursor c = getContentResolver().query(contactUri, projection, null,
 				null, null);
+		String name = myLanguage.getTxtUnknown();
 		if (c.moveToFirst()) {
-			String name = c.getString(c
-					.getColumnIndex(Contacts.Phones.DISPLAY_NAME));
-			return name;
+			String notes = c.getString(c.getColumnIndex(Contacts.Phones.NOTES)); 
+			String dname = c.getString(c.getColumnIndex(Contacts.Phones.DISPLAY_NAME)); 		
+			if(!useNote || notes == null || notes.length()==0 ) { 
+				name = dname;
+			} else {
+				name = notes;
+			}
 		}
-		return myLanguage.getTxtUnknown();
+		return name;
 	}
 
+	@SuppressWarnings("deprecation")
 	private SmsMessage[] getMessagesFromIntent(Intent intent)
 	{
 		SmsMessage retMsgs[] = null;
@@ -595,10 +591,6 @@ public class TTSNotifierService extends Service {
 	}
 
 	public static void beginStartingService(Context context, Intent intent) {
-		//intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-		if (isTtsInstalled(context))
-			context.startService(intent);
-		else
-			Toast.makeText(context, "TTSNotifier: TTS not installed! Install it from the market!", Toast.LENGTH_LONG).show();
+		context.startService(intent);
 	}
 }

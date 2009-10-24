@@ -6,7 +6,7 @@ public class TTSNotifierLanguageNL extends TTSNotifierLanguage {
 
 	@Override
 	public Locale getLocale() {
-		return Locale.ENGLISH;
+		return Locale.GERMAN;
 	}
 
 	@Override

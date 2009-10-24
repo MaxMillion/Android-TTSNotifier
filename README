@@ -2,7 +2,7 @@
                 *                              *
                 *         TTS Notifier         *
                 *                              *
-                *         Version 1.6          *
+                *         Version 1.7          *
                 *                              *
                 *      Made by Lode Hoste      *
                 *                              *
@@ -56,9 +56,19 @@ Table of contents
 2. Key bindings / Options
 =%=%=%=%=%=%=%=%=%=%=%=%=
 
- - None atm
-
-Just edit the source when you want to change something
+- Incoming call speech notification
+- Special incoming call ringtone which switches between ringtone and speech according to multiple parameters
+- Incoming SMS (speaks personname and/or body of the message)
+- Battery low notification
+- Bad media removal notification
+- Provider changed notification
+- Media unmounted notification
+- Open Wifi discovered notification (* should be switched on in the wireless settings)
+- Wifi connected / disconnected notifications
+- Set volume for the notification
+- Obey silent mode of the phone (does not notify when phone is in silent mode)
+- All spoken text can be user specified
+- Multi-language support
 
 
 
@@ -73,7 +83,20 @@ If you make any changes to the source, please mail me the 'diff -u' of the file(
 
 
 
-6. License
+4. Credits
+=%=%=%=%=%
+
+The project is implemented by Lode Hoste.
+You can checkout my homepage for more info about this project.
+
+Homepage: http://www.zillode.be
+Email: zillode@zillode.be
+
+Patch by virdi:
+	- Speak name from the "Notes" field instead of the "Display" name
+
+
+5. License
 =%=%=%=%=%
 
 TTSNotifier for Android

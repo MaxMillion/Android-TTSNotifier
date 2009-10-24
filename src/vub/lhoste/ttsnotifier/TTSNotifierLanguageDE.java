@@ -18,7 +18,7 @@ public class TTSNotifierLanguageDE extends TTSNotifierLanguage {
 	public String getTxtUnknown() {
 		return "Unbekannt";
 	}
-	
+
 	@Override
 	public String getTxtOptionsBatteryLowWarningText() {
 		return "Akku ist fast leer";

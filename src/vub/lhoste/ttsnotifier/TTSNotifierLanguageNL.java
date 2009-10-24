@@ -18,7 +18,7 @@ public class TTSNotifierLanguageNL extends TTSNotifierLanguage {
 	public String getTxtUnknown() {
 		return "Onbekend";
 	}
-	
+
 	@Override
 	public String getTxtOptionsBatteryLowWarningText() {
 		return "Batterij bijna leeg";

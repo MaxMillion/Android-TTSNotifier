@@ -2,7 +2,7 @@
                 *                              *
                 *         TTS Notifier         *
                 *                              *
-                *         Version 1.7          *
+                *         Version 1.8          *
                 *                              *
                 *      Made by Lode Hoste      *
                 *                              *
@@ -47,7 +47,7 @@ Table of contents
 1. Dependencies and Installing
 =%=%=%=%=%=%=%=%=%=%=%=%=%=%=%
 
- - >=tts_1.4 - Text-To-Speech (TTS) library for Android.
+ - >=tts_1.6 - Text-To-Speech (TTS) library for Android.
 
  - Download the apk file from http://wilma.vub.ac.be/~lhoste/TTSNotifier.php
 

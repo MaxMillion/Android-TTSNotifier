@@ -9,6 +9,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -29,7 +30,6 @@ import android.telephony.TelephonyManager;
 import android.telephony.gsm.SmsMessage;
 import android.util.Log;
 
-@SuppressWarnings("deprecation")
 public class TTSNotifierService extends Service {
 
 	public volatile static TTSNotifierLanguage myLanguage = null;
@@ -411,8 +411,7 @@ public class TTSNotifierService extends Service {
 			restoreVolume();
 		}
 	}
-
-	@SuppressWarnings("deprecation")
+	
 	private void handleACTION_SMS_RECEIVED(Intent intent) {
 		if (!mPrefs.getBoolean("cbxEnableIncomingSMS", true)) return;
 		final boolean cbxOptionsIncomingSMSUseNoteField = mPrefs.getBoolean("cbxOptionsIncomingSMSUseNoteField", false);
@@ -568,7 +567,6 @@ public class TTSNotifierService extends Service {
 		return name;
 	}
 
-	@SuppressWarnings("deprecation")
 	private SmsMessage[] getMessagesFromIntent(Intent intent)
 	{
 		SmsMessage retMsgs[] = null;
@@ -590,7 +588,23 @@ public class TTSNotifierService extends Service {
 		return retMsgs;
 	}
 
+	public static boolean isTtsInstalled(Context ctx) {
+		try {
+			ctx.createPackageContext("com.google.tts", 0);
+		} catch (NameNotFoundException e1) {
+			try {
+				String classToLoad = "android.speech.tts.TextToSpeech";
+			    Class<?> c = Class.forName(classToLoad, false, ctx.getClass().getClassLoader());
+			    Class[] args = new Class[1];
+		        } catch (Exception e) {
+		        	return false;
+				}
+		}
+		return true;
+	}
+
 	public static void beginStartingService(Context context, Intent intent) {
-		context.startService(intent);
+		if (isTtsInstalled(context))
+			context.startService(intent);
 	}
 }

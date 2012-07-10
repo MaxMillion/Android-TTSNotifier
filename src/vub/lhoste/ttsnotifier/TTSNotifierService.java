@@ -3,8 +3,6 @@ package vub.lhoste.ttsnotifier;
 import java.io.IOException;
 import java.util.Locale;
 
-import com.google.tts.TextToSpeechBeta;
-
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -24,8 +22,10 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
 import android.preference.PreferenceManager;
-import android.provider.Contacts;
+import android.provider.ContactsContract.CommonDataKinds;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.Settings;
+import android.speech.tts.TextToSpeech;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.SmsMessage;
 import android.util.Log;
@@ -50,7 +50,8 @@ public class TTSNotifierService extends Service {
 	private static final int MEDIUM_THREADWAIT = 300;
 	private static final int SHORT_THREADWAIT = 50;
 
-	public volatile static TextToSpeechBeta myTts = null;
+	public volatile static TextToSpeech myTts = null;
+	public volatile static TextToSpeech.OnInitListener ttsInitListener = null;
 	public volatile static boolean ttsReady = false;
 	private volatile MediaPlayer myRingTonePlayer = null;
 	private volatile boolean stopRingtone = false;
@@ -89,14 +90,26 @@ public class TTSNotifierService extends Service {
 		thread.start();
 		mServiceLooper = thread.getLooper();
 		mServiceHandler = new ServiceHandler(mServiceLooper);
+
 	}
 
 	@Override
 	public void onStart(Intent intent, int startId) {
 		Log.v("TTSNotifierService", "onStart()");
 		if (myTts == null) {
+			if (!isTtsInstalled(context)) return;
 			try {
-				myTts = new TextToSpeechBeta(context, ttsInitListener);
+				ttsInitListener = new TextToSpeech.OnInitListener() {
+						@Override
+						public void onInit(int arg0) {
+							Log.v("TTSNotifierService", "TTS INIT DONE");
+							setLanguageTts(myLanguage.getLocale());
+							myTts.speak("", 0, null);
+							ttsReady = true;
+							
+						}
+					};
+				myTts = new TextToSpeech(context, ttsInitListener);
 			} catch (java.lang.ExceptionInInitializerError e) { e.printStackTrace(); }
 		}
 		if (mPrefs.getBoolean("cbxChangeLanguage", false))
@@ -187,13 +200,14 @@ public class TTSNotifierService extends Service {
 				|| language.equals("en_CA")
 				|| language.equals("en_AU")
 				|| language.equals("en_NZ")
-				|| language.equals("en_SG") )
+				|| language.equals("en_SG"))
 			myLanguage = new TTSNotifierLanguageEN();
 		else if (language.equals("Nederlands")
 				|| language.equals("nl_NL")
 				|| language.equals("nl_BE"))
 			myLanguage = new TTSNotifierLanguageNL();
-		else if (language.equals("Français")
+		else if (language.equals("Fran�ais")
+				|| language.equals("Français")
 				|| language.equals("fr_FR")
 				|| language.equals("fr_BE")
 				|| language.equals("fr_CA")
@@ -412,6 +426,7 @@ public class TTSNotifierService extends Service {
 		}
 	}
 	
+	@SuppressWarnings("deprecation")
 	private void handleACTION_SMS_RECEIVED(Intent intent) {
 		if (!mPrefs.getBoolean("cbxEnableIncomingSMS", true)) return;
 		final boolean cbxOptionsIncomingSMSUseNoteField = mPrefs.getBoolean("cbxOptionsIncomingSMSUseNoteField", false);
@@ -476,6 +491,7 @@ public class TTSNotifierService extends Service {
 		speak(txtOptionsProviderChangedText, true);
 	}
 
+	@SuppressWarnings("unused")
 	public void handleACTION_MEDIA_MOUNTED(Intent intent) {
 		if (!mPrefs.getBoolean("cbxEnableMediaMounted", true)) return;
 		if (true) return; // Disabled because TTS needs the SD card
@@ -537,27 +553,19 @@ public class TTSNotifierService extends Service {
 			speak(txtOptionsWifiDisconnected, true);
 	}
 
-	public static TextToSpeechBeta.OnInitListener ttsInitListener = new TextToSpeechBeta.OnInitListener() {
-		public void onInit(int status, int version) {
-			Log.v("TTSNotifierService", "TTS INIT DONE");
-			setLanguageTts(myLanguage.getLocale());
-			myTts.speak("", 0, null);
-			ttsReady = true;
-		}
-	};
-
 	private String getContactNameFromNumber(String number, boolean useNote) {
 		String[] projection = new String[] {
-				Contacts.Phones.NOTES,
-				Contacts.Phones.DISPLAY_NAME, 
-				Contacts.Phones.NUMBER };
-		Uri contactUri = Uri.withAppendedPath(Contacts.Phones.CONTENT_FILTER_URL, Uri.encode(number));
-		Cursor c = getContentResolver().query(contactUri, projection, null,
-				null, null);
+				CommonDataKinds.Note.NOTE, Phone.DISPLAY_NAME };
+		Uri contactUri = Uri.withAppendedPath(Phone.CONTENT_URI, Uri.encode(number));
+		Cursor c = getContentResolver().query(contactUri,
+				projection,
+				Phone.NUMBER + "=?",
+                new String[]{String.valueOf(number)},
+                null);
 		String name = myLanguage.getTxtUnknown();
 		if (c.moveToFirst()) {
-			String notes = c.getString(c.getColumnIndex(Contacts.Phones.NOTES)); 
-			String dname = c.getString(c.getColumnIndex(Contacts.Phones.DISPLAY_NAME)); 		
+			String notes = c.getString(c.getColumnIndex(CommonDataKinds.Note.NOTE)); 
+			String dname = c.getString(c.getColumnIndex(Phone.DISPLAY_NAME)); 		
 			if(!useNote || notes == null || notes.length()==0 ) { 
 				name = dname;
 			} else {
@@ -567,6 +575,7 @@ public class TTSNotifierService extends Service {
 		return name;
 	}
 
+	@SuppressWarnings("deprecation")
 	private SmsMessage[] getMessagesFromIntent(Intent intent)
 	{
 		SmsMessage retMsgs[] = null;
@@ -588,6 +597,7 @@ public class TTSNotifierService extends Service {
 		return retMsgs;
 	}
 
+	@SuppressWarnings({ "rawtypes", "unused" })
 	public static boolean isTtsInstalled(Context ctx) {
 		try {
 			ctx.createPackageContext("com.google.tts", 0);
@@ -599,6 +609,8 @@ public class TTSNotifierService extends Service {
 		        } catch (Exception e) {
 		        	return false;
 				}
+		} catch (Exception e) {
+			return false;
 		}
 		return true;
 	}

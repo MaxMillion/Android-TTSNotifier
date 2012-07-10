@@ -1,18 +1,13 @@
 package vub.lhoste.ttsnotifier;
 
-import java.net.URLEncoder;
-
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.preference.Preference.OnPreferenceClickListener;
-import android.util.Log;
 
 public class TTSNotifierPreferences extends PreferenceActivity {
 

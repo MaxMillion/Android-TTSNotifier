@@ -29,14 +29,14 @@
 			android:defaultValue="true" android:summary="enable TTS on Media unmounted"
 			android:dependency="cbxEnable" android:key="cbxEnableMediaUnMounted" />
 		<CheckBoxPreference android:title="Wifi discovered"
-			android:defaultValue="true"
+			android:defaultValue="false"
 			android:summary="note: network notification should be enabled in Wireless controls"
 			android:dependency="cbxEnable" android:key="cbxEnableWifiDiscovered" />
 		<CheckBoxPreference android:title="Wifi connected"
-			android:defaultValue="true" android:summary="enable TTS when wifi is connected"
+			android:defaultValue="false" android:summary="enable TTS when wifi is connected"
 			android:dependency="cbxEnable" android:key="cbxEnableWifiConnect" />
 		<CheckBoxPreference android:title="Wifi disconnected"
-			android:defaultValue="true" android:summary="enable TTS when wifi is disconnected"
+			android:defaultValue="false" android:summary="enable TTS when wifi is disconnected"
 			android:dependency="cbxEnable" android:key="cbxEnableWifiDisconnect" />
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Extra options">

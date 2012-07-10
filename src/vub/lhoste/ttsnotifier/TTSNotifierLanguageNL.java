@@ -6,6 +6,7 @@ public class TTSNotifierLanguageNL extends TTSNotifierLanguage {
 
 	@Override
 	public Locale getLocale() {
+		// See http://eyes-free.googlecode.com/svn-history/r593/trunk/tts/src/com/google/tts/TTSService.java
 		return new Locale("nld", "", "");
 	}
 

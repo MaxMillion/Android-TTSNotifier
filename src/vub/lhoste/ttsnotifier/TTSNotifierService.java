@@ -3,6 +3,8 @@ package vub.lhoste.ttsnotifier;
 import java.io.IOException;
 import java.util.Locale;
 
+import com.google.tts.TextToSpeechBeta;
+
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -50,8 +52,7 @@ public class TTSNotifierService extends Service {
 	private static final int MEDIUM_THREADWAIT = 300;
 	private static final int SHORT_THREADWAIT = 50;
 
-	public volatile static TextToSpeech myTts = null;
-	public volatile static TextToSpeech.OnInitListener ttsInitListener = null;
+	public volatile static TTSDispatcher myTts = null;
 	public volatile static boolean ttsReady = false;
 	private volatile MediaPlayer myRingTonePlayer = null;
 	private volatile boolean stopRingtone = false;
@@ -97,20 +98,7 @@ public class TTSNotifierService extends Service {
 	public void onStart(Intent intent, int startId) {
 		Log.v("TTSNotifierService", "onStart()");
 		if (myTts == null) {
-			if (!isTtsInstalled(context)) return;
-			try {
-				ttsInitListener = new TextToSpeech.OnInitListener() {
-						@Override
-						public void onInit(int arg0) {
-							Log.v("TTSNotifierService", "TTS INIT DONE");
-							setLanguageTts(myLanguage.getLocale());
-							myTts.speak("", 0, null);
-							ttsReady = true;
-							
-						}
-					};
-				myTts = new TextToSpeech(context, ttsInitListener);
-			} catch (java.lang.ExceptionInInitializerError e) { e.printStackTrace(); }
+			myTts = new TTSDispatcher(context);
 		}
 		if (mPrefs.getBoolean("cbxChangeLanguage", false))
 			setLanguageTts(myLanguage.getLocale());
@@ -597,26 +585,8 @@ public class TTSNotifierService extends Service {
 		return retMsgs;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unused" })
-	public static boolean isTtsInstalled(Context ctx) {
-		try {
-			ctx.createPackageContext("com.google.tts", 0);
-		} catch (NameNotFoundException e1) {
-			try {
-				String classToLoad = "android.speech.tts.TextToSpeech";
-			    Class<?> c = Class.forName(classToLoad, false, ctx.getClass().getClassLoader());
-			    Class[] args = new Class[1];
-		        } catch (Exception e) {
-		        	return false;
-				}
-		} catch (Exception e) {
-			return false;
-		}
-		return true;
-	}
-
 	public static void beginStartingService(Context context, Intent intent) {
-		if (isTtsInstalled(context))
+		if (TTSDispatcher.isTtsInstalled(context))
 			context.startService(intent);
 	}
 }

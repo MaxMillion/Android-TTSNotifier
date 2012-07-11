@@ -132,6 +132,7 @@ public class TTSNotifierService extends Service {
 			Log.v("TTSNotifierService", "handleMessage()");
 
 			Intent intent = (Intent) msg.obj;
+			if (intent == null) return;
 			String action = intent.getAction();
 
 			readState();

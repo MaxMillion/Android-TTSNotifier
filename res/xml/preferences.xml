@@ -63,8 +63,8 @@
 			android:defaultValue="false"
 			android:summary="(only needed when using the 'Special TTS Ringtone mode'). Restart App!"
 			android:key="cbxRunWithHighPriority" />
-		<Preference android:title="Install better TTS"
-			android:summary="Install Text-To-Speech Extended for improved TTS"
+		<Preference android:title="Improve TTS"
+			android:summary="Install 'eSpeak TTS' for improved TTS"
 			android:key="btnInstallTTSBeta" />
 	</PreferenceCategory>
 	<PreferenceCategory android:title="Extra options for incoming call">
